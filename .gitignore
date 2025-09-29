@@ -1,0 +1,7 @@
+Dockerfile
+/aws
+docker-compose.yml
+awscliv2.zip
+agentTracker
+*.exe
+awshelpnotes.md

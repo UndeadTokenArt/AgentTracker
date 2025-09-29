@@ -1,0 +1,7 @@
+:root{--player:#5bc0de;--monster:#f0ad4e}
+.entity{border:1px solid rgba(255,255,255,.08); border-left-width:4px}
+.entity.player{border-color:rgba(91,192,222,.35); border-left-color:var(--player)}
+.entity.monster{border-color:rgba(240,173,78,.35); border-left-color:var(--monster)}
+.entity.active{box-shadow:0 0 0 2px rgba(91,192,222,.35) inset}
+.hpbar{height:8px;background:#333;border-radius:4px;overflow:hidden}
+.hpbar .inner{height:100%;background:#d9534f}
