@@ -41,7 +41,7 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "80"
+		port = "8080"
 		log.Printf("defaulting to port %s", port)
 	}
 	if err := r.Run(":" + port); err != nil {

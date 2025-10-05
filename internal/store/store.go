@@ -155,3 +155,20 @@ func (s *Store) NextTurn(code string) (*models.Group, error) {
 	g.NextTurn()
 	return g, nil
 }
+
+func (s *Store) ResetInitiative(code, uid string) (*models.Group, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	g, ok := s.groups[code]
+	if !ok {
+		return nil, errors.New("group not found")
+	}
+	if g.DMUID != uid {
+		return nil, errors.New("not dm")
+	}
+	// Clear all entities and reset round/turn
+	g.Entities = []models.Entity{}
+	g.Round = 1
+	g.TurnIndex = 0
+	return g, nil
+}

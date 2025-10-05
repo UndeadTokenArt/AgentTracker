@@ -142,6 +142,11 @@ func registerRoutes(r *gin.Engine) {
 				st.Reorder(code, uid, order)
 			case "next":
 				st.NextTurn(code)
+			case "reset":
+				if !isDM {
+					break
+				}
+				st.ResetInitiative(code, uid)
 			}
 			if g2, ok := st.GetGroup(code); ok {
 				hb.BroadcastState(code, g2)

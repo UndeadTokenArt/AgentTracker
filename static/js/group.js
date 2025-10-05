@@ -96,6 +96,14 @@
 
   nextBtn?.addEventListener('click', ()=> wsSend('next', {}));
 
+  // Reset button (DM only)
+  const resetBtn = document.getElementById('resetBtn');
+  resetBtn?.addEventListener('click', () => {
+    if (confirm('Are you sure you want to reset the initiative? This will remove all players and monsters.')) {
+      wsSend('reset', {});
+    }
+  });
+
   // Drag and drop for DM
   if (ctx.isDM) {
     new Sortable(list, {

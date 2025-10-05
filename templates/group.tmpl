@@ -30,15 +30,23 @@
     </div>
   </div>
 
+  <div class="col-lg-8">
+    <div class="card h-100">
+      <div class="card-body">
+        <h2 class="h5 d-flex align-items-center gap-2">Initiative Order <small class="text-muted">drag to reorder (DM)</small></h2>
+        <ul id="list" class="list-group list-group-flush"></ul>
+      </div>
+    </div>
+  </div>
+
   <div class="row g-3">
     <div class="col-lg-4">
       <div class="card h-100">
         <div class="card-body">
-          <h2 class="h5">Add Player</h2>
           <form id="playerForm" class="row g-2">
             <div class="col-12"><input class="form-control" name="name" placeholder="Character name" required></div>
             <div class="col-6"><input type="number" class="form-control" name="initiative" placeholder="Initiative" min="0"></div>
-            <div class="col-6"><input type="number" class="form-control" name="bonus" placeholder="Bonus" value="0"></div>
+            <div class="col-6"><input type="number" class="form-control" name="bonus" placeholder="Bonus" value="intiative Bonus"></div>
             <div class="col-6 d-grid"><button class="btn btn-primary" type="submit">Add</button></div>
             <div class="col-6 d-grid"><button id="rollBtn" class="btn btn-outline-primary" type="button">Roll + Bonus</button></div>
           </form>
@@ -48,24 +56,22 @@
           <h2 class="h5">Add Monster (DM)</h2>
           <form id="monsterForm" class="row g-2">
             <div class="col-12"><input class="form-control" name="name" placeholder="Monster name" required></div>
-            <div class="col-6"><input type="number" class="form-control" name="hp" placeholder="HP" min="0" value="10"></div>
+            <div class="col-6"><input type="number" class="form-control" name="hp" placeholder="HP" min="0" value="hitpoints"></div>
             <div class="col-3"><input type="number" class="form-control" name="initiative" placeholder="Init" min="0"></div>
             <div class="col-3"><input type="number" class="form-control" name="bonus" placeholder="Bonus" value="0"></div>
             <div class="col-12 d-grid"><button class="btn btn-warning" type="submit">Add Monster</button></div>
+
           </form>
+          <hr>
+          <div class="reset-initiative">
+            <div class="col-12 d-grid"><button id="resetBtn" class="btn btn-danger" type="button">Reset Initiative</button></div>
+          </div>
           {{end}}
         </div>
       </div>
     </div>
 
-    <div class="col-lg-8">
-      <div class="card h-100">
-        <div class="card-body">
-          <h2 class="h5 d-flex align-items-center gap-2">Initiative Order <small class="text-muted">drag to reorder (DM)</small></h2>
-          <ul id="list" class="list-group list-group-flush"></ul>
-        </div>
-      </div>
-    </div>
+
   </div>
 </div>
 
