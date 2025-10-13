@@ -1,3 +1,24 @@
+// Package store provides an in-memory data store for managing groups and entities
+// in the AgentTracker application. It supports concurrent access and operations
+// such as creating groups, adding players and monsters, tracking initiative order,
+// applying damage, reordering entities, advancing turns, and resetting group state.
+//
+// The Store type maintains a map of groups, each identified by a unique code.
+// Groups contain entities representing players and monsters, with initiative and
+// other combat-related attributes. The store ensures thread-safe access using
+// sync.RWMutex.
+//
+// Key features:
+//   - Create or retrieve groups with unique codes
+//   - Add players (with or without initiative rolls) and monsters to groups
+//   - Sort entities by initiative order
+//   - Apply damage to monsters
+//   - Reorder entities within a group
+//   - Advance to the next turn and reset initiative for a group
+//   - Enforce DM (Dungeon Master) permissions for sensitive operations
+//
+// This package is intended for use as the backend state management for turn-based
+// combat tracking in tabletop RPG scenarios.
 package store
 
 import (
@@ -17,7 +38,6 @@ type Store struct {
 }
 
 func New() *Store {
-	rand.Seed(time.Now().UnixNano())
 	return &Store{groups: make(map[string]*models.Group)}
 }
 
@@ -171,4 +191,131 @@ func (s *Store) ResetInitiative(code, uid string) (*models.Group, error) {
 	g.Round = 1
 	g.TurnIndex = 0
 	return g, nil
+}
+
+// DeleteEntity removes an entity from the group (DM only)
+func (s *Store) DeleteEntity(code, uid, entityID string) (*models.Group, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	g, ok := s.groups[code]
+	if !ok {
+		return nil, errors.New("group not found")
+	}
+	if g.DMUID != uid {
+		return nil, errors.New("not dm")
+	}
+	for i, entity := range g.Entities {
+		if entity.ID == entityID {
+			// Remove entity from slice
+			g.Entities = append(g.Entities[:i], g.Entities[i+1:]...)
+			// Adjust turn index if needed
+			if g.TurnIndex > i {
+				g.TurnIndex--
+			} else if g.TurnIndex >= len(g.Entities) && len(g.Entities) > 0 {
+				g.TurnIndex = 0
+			}
+			return g, nil
+		}
+	}
+	return nil, errors.New("entity not found")
+}
+
+// RenameEntity changes an entity's name (DM only)
+func (s *Store) RenameEntity(code, uid, entityID, newName string) (*models.Group, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	g, ok := s.groups[code]
+	if !ok {
+		return nil, errors.New("group not found")
+	}
+	if g.DMUID != uid {
+		return nil, errors.New("not dm")
+	}
+	for i := range g.Entities {
+		if g.Entities[i].ID == entityID {
+			g.Entities[i].Name = newName
+			return g, nil
+		}
+	}
+	return nil, errors.New("entity not found")
+}
+
+// EditEntityHP modifies an entity's current and max HP (DM only)
+func (s *Store) EditEntityHP(code, uid, entityID string, currentHP, maxHP int) (*models.Group, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	g, ok := s.groups[code]
+	if !ok {
+		return nil, errors.New("group not found")
+	}
+	if g.DMUID != uid {
+		return nil, errors.New("not dm")
+	}
+	for i := range g.Entities {
+		if g.Entities[i].ID == entityID {
+			if currentHP < 0 {
+				currentHP = 0
+			}
+			if maxHP < 0 {
+				maxHP = 0
+			}
+			g.Entities[i].HP = currentHP
+			g.Entities[i].MaxHP = maxHP
+			return g, nil
+		}
+	}
+	return nil, errors.New("entity not found")
+}
+
+// AddEntityTag adds a condition tag to an entity (DM only)
+func (s *Store) AddEntityTag(code, uid, entityID, tag string) (*models.Group, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	g, ok := s.groups[code]
+	if !ok {
+		return nil, errors.New("group not found")
+	}
+	if g.DMUID != uid {
+		return nil, errors.New("not dm")
+	}
+	for i := range g.Entities {
+		if g.Entities[i].ID == entityID {
+			// Check if tag already exists
+			for _, existingTag := range g.Entities[i].Tags {
+				if existingTag == tag {
+					return g, nil // Tag already exists, no need to add
+				}
+			}
+			// Add the new tag
+			g.Entities[i].Tags = append(g.Entities[i].Tags, tag)
+			return g, nil
+		}
+	}
+	return nil, errors.New("entity not found")
+}
+
+// RemoveEntityTag removes a condition tag from an entity (DM only)
+func (s *Store) RemoveEntityTag(code, uid, entityID, tag string) (*models.Group, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	g, ok := s.groups[code]
+	if !ok {
+		return nil, errors.New("group not found")
+	}
+	if g.DMUID != uid {
+		return nil, errors.New("not dm")
+	}
+	for i := range g.Entities {
+		if g.Entities[i].ID == entityID {
+			// Find and remove the tag
+			for j, existingTag := range g.Entities[i].Tags {
+				if existingTag == tag {
+					g.Entities[i].Tags = append(g.Entities[i].Tags[:j], g.Entities[i].Tags[j+1:]...)
+					return g, nil
+				}
+			}
+			return g, nil // Tag not found, but that's okay
+		}
+	}
+	return nil, errors.New("entity not found")
 }

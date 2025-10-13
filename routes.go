@@ -147,6 +147,47 @@ func registerRoutes(r *gin.Engine) {
 					break
 				}
 				st.ResetInitiative(code, uid)
+			case "deleteEntity":
+				if !isDM {
+					break
+				}
+				entityID := getStr(in.Data, "id")
+				st.DeleteEntity(code, uid, entityID)
+			case "renameEntity":
+				if !isDM {
+					break
+				}
+				entityID := getStr(in.Data, "id")
+				newName := strings.TrimSpace(getStr(in.Data, "name"))
+				if newName != "" {
+					st.RenameEntity(code, uid, entityID, newName)
+				}
+			case "editEntityHP":
+				if !isDM {
+					break
+				}
+				entityID := getStr(in.Data, "id")
+				currentHP := getInt(in.Data, "hp")
+				maxHP := getInt(in.Data, "maxHp")
+				st.EditEntityHP(code, uid, entityID, currentHP, maxHP)
+			case "addEntityTag":
+				if !isDM {
+					break
+				}
+				entityID := getStr(in.Data, "id")
+				tag := strings.TrimSpace(getStr(in.Data, "tag"))
+				if tag != "" {
+					st.AddEntityTag(code, uid, entityID, tag)
+				}
+			case "removeEntityTag":
+				if !isDM {
+					break
+				}
+				entityID := getStr(in.Data, "id")
+				tag := strings.TrimSpace(getStr(in.Data, "tag"))
+				if tag != "" {
+					st.RemoveEntityTag(code, uid, entityID, tag)
+				}
 			}
 			if g2, ok := st.GetGroup(code); ok {
 				hb.BroadcastState(code, g2)

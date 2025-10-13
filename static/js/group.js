@@ -27,19 +27,58 @@
       const li = document.createElement('li');
       li.className = `list-group-item bg-dark text-light d-flex justify-content-between align-items-center entity ${e.type}`;
       li.dataset.id = e.id;
+      
       const left = document.createElement('div');
       left.className = 'd-flex flex-column';
-      left.innerHTML = `<div class="fw-semibold">${escapeHtml(e.name)}</div>
-                        <div class="small text-secondary">Init ${e.initiative}${e.bonus?` (b+${e.bonus})`:''}</div>`;
+      
+      // Entity name and initiative
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'fw-semibold';
+      nameDiv.textContent = e.name;
+      left.appendChild(nameDiv);
+      
+      // Initiative info
+      const initDiv = document.createElement('div');
+      initDiv.className = 'small text-secondary';
+      initDiv.textContent = `Init ${e.initiative}${e.bonus?` (b+${e.bonus})`:''}`;
+      left.appendChild(initDiv);
+      
+      // Tags (conditions)
+      if (e.tags && e.tags.length > 0) {
+        const tagsDiv = document.createElement('div');
+        tagsDiv.className = 'small mt-1';
+        e.tags.forEach(tag => {
+          const tagSpan = document.createElement('span');
+          tagSpan.className = 'badge text-bg-warning me-1';
+          tagSpan.textContent = tag;
+          if (ctx.isDM) {
+            tagSpan.style.cursor = 'pointer';
+            tagSpan.title = 'Click to remove';
+            tagSpan.onclick = () => {
+              if (confirm(`Remove condition "${tag}"?`)) {
+                wsSend('removeEntityTag', { id: e.id, tag });
+              }
+            };
+          }
+          tagsDiv.appendChild(tagSpan);
+        });
+        left.appendChild(tagsDiv);
+      }
+      
       li.appendChild(left);
+      
       const right = document.createElement('div');
       right.className = 'd-flex align-items-center gap-2';
+      
+      // HP display for monsters
       if (e.type === 'monster' && ctx.isDM) {
         const hpWrap = document.createElement('div');
-        hpWrap.style.minWidth = '120px'; hpWrap.className = 'text-end';
+        hpWrap.style.minWidth = '120px'; 
+        hpWrap.className = 'text-end';
         hpWrap.innerHTML = `<div class="small">HP ${e.hp}/${e.maxHp}</div>
                             <div class="hpbar"><div class="inner" style="width:${pct(e.hp,e.maxHp)}%"></div></div>`;
         right.appendChild(hpWrap);
+        
         const dmgBtn = document.createElement('button');
         dmgBtn.className = 'btn btn-sm btn-outline-danger';
         dmgBtn.textContent = 'Damage';
@@ -50,6 +89,93 @@
         };
         right.appendChild(dmgBtn);
       }
+      
+      // GM Controls
+      if (ctx.isDM) {
+        const controlsDiv = document.createElement('div');
+        controlsDiv.className = 'dropdown';
+        
+        const dropBtn = document.createElement('button');
+        dropBtn.className = 'btn btn-sm btn-outline-secondary dropdown-toggle';
+        dropBtn.setAttribute('data-bs-toggle', 'dropdown');
+        dropBtn.textContent = '⚙️';
+        
+        const dropMenu = document.createElement('ul');
+        dropMenu.className = 'dropdown-menu dropdown-menu-dark';
+        
+        // Rename option
+        const renameItem = document.createElement('li');
+        const renameLink = document.createElement('a');
+        renameLink.className = 'dropdown-item';
+        renameLink.href = '#';
+        renameLink.textContent = 'Rename';
+        renameLink.onclick = (ev) => {
+          ev.preventDefault();
+          const newName = prompt('New name:', e.name);
+          if (newName && newName.trim() !== e.name) {
+            wsSend('renameEntity', { id: e.id, name: newName.trim() });
+          }
+        };
+        renameItem.appendChild(renameLink);
+        dropMenu.appendChild(renameItem);
+        
+        // Edit HP option (for monsters)
+        if (e.type === 'monster') {
+          const hpItem = document.createElement('li');
+          const hpLink = document.createElement('a');
+          hpLink.className = 'dropdown-item';
+          hpLink.href = '#';
+          hpLink.textContent = 'Edit HP';
+          hpLink.onclick = (ev) => {
+            ev.preventDefault();
+            const currentHP = prompt('Current HP:', e.hp);
+            const maxHP = prompt('Max HP:', e.maxHp);
+            if (currentHP !== null && maxHP !== null) {
+              const hp = parseInt(currentHP, 10) || 0;
+              const maxHp = parseInt(maxHP, 10) || 0;
+              wsSend('editEntityHP', { id: e.id, hp, maxHp });
+            }
+          };
+          hpItem.appendChild(hpLink);
+          dropMenu.appendChild(hpItem);
+        }
+        
+        // Add condition option
+        const tagItem = document.createElement('li');
+        const tagLink = document.createElement('a');
+        tagLink.className = 'dropdown-item';
+        tagLink.href = '#';
+        tagLink.textContent = 'Add Condition';
+        tagLink.onclick = (ev) => {
+          ev.preventDefault();
+          const tag = prompt('Condition name (e.g., poisoned, stunned):');
+          if (tag && tag.trim()) {
+            wsSend('addEntityTag', { id: e.id, tag: tag.trim() });
+          }
+        };
+        tagItem.appendChild(tagLink);
+        dropMenu.appendChild(tagItem);
+        
+        // Delete option
+        const deleteItem = document.createElement('li');
+        const deleteLink = document.createElement('a');
+        deleteLink.className = 'dropdown-item text-danger';
+        deleteLink.href = '#';
+        deleteLink.textContent = 'Delete';
+        deleteLink.onclick = (ev) => {
+          ev.preventDefault();
+          if (confirm(`Delete "${e.name}"?`)) {
+            wsSend('deleteEntity', { id: e.id });
+          }
+        };
+        deleteItem.appendChild(deleteLink);
+        dropMenu.appendChild(deleteItem);
+        
+        controlsDiv.appendChild(dropBtn);
+        controlsDiv.appendChild(dropMenu);
+        right.appendChild(controlsDiv);
+      }
+      
       li.appendChild(right);
       if (i === turn) li.classList.add('active');
       list.appendChild(li);

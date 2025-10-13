@@ -1,3 +1,9 @@
+// Package models provides core data structures and logic for managing entities and groups
+// in a turn-based initiative system, such as those used in tabletop role-playing games.
+// It defines types for entities (players and monsters), groups that organize entities,
+// and utility functions for sorting entities by initiative, advancing turns and rounds,
+// and rolling dice. The package ensures stable and fair ordering of turns, supports
+// initiative bonuses, and tracks health and ownership for each entity.
 package models
 
 import (
@@ -13,6 +19,8 @@ const (
 	Monster EntityType = "monster"
 )
 
+//
+
 type Entity struct {
 	ID         string     `json:"id"`
 	Name       string     `json:"name"`
@@ -22,6 +30,7 @@ type Entity struct {
 	HP         int        `json:"hp"`
 	MaxHP      int        `json:"maxHp"`
 	OwnerUID   string     `json:"ownerUid"` // for players
+	Tags       []string   `json:"tags"`     // for conditions like "poisoned", "stunned", etc.
 }
 
 type Group struct {
